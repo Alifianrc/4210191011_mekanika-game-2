@@ -10,6 +10,7 @@ TagManager:
   - Star
   - PureStar
   - Trap
+  - DeadGround
   layers:
   - Default
   - TransparentFX
