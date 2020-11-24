@@ -36,18 +36,22 @@ public class PlayerMovement : MonoBehaviour
     private int flashLevel = 0;
     private int superJumpValue = 10;
     private Rigidbody2D theRigid;
+    protected Joystick theJoystick;
+    public SceneController theSceneContreoller;
     
 
     void Start()
     {
+        theJoystick = FindObjectOfType<Joystick>();
         isDead = false;
         speed = runSpeed;
         starValue = 0;
         theUiStarCount.changeStarText(starValue);
+        theUiStarCount.changeStarText(starValue);
         isEnoughStarTrap = false;
         isEnoughStarFlash = false;
         isEnoghStarSuperJump = false;
-        trapLvlText.text = "";
+        trapLvlText.text = "Level 0";
         flashLvlText.text = "Level " + flashLevel;
         superJumpLvlText.text = "MAX";
         theRigid = GetComponent<Rigidbody2D>();
@@ -55,59 +59,110 @@ public class PlayerMovement : MonoBehaviour
         
     void Update()
     {
-        if (thecooldown.SuperJumpIsChannelling == false && isDead == false)
+        if (thecooldown.SuperJumpIsChannelling == false && isDead == false && SceneController.gameIsStarted)
         {
             //Get user input
             horizontalMove = Input.GetAxisRaw("Horizontal") * speed; //Debug.Log(speed);
             animator.SetFloat("Speed", Mathf.Abs(horizontalMove));
 
+            //Get user Input Mobile
+            //horizontalMove = theJoystick.Horizontal * speed;
+            //animator.SetFloat("Speed", Mathf.Abs(horizontalMove));
+
             if (Input.GetButtonDown("Jump"))
             {
-                jump = true;
-                animator.SetBool("IsJump", true);
+                Jumping();
             }
 
-            if (Input.GetButtonDown("Crouch"))
+            if (Input.GetButtonDown("Crouch") || theJoystick.Vertical < -0.65f)
             {
-                crouch = true;
-                animator.SetBool("IsCrouch", true);
+                Crouching();
             }
-            else if (Input.GetButtonUp("Crouch"))
+            else if (Input.GetButtonUp("Crouch") || theJoystick.Vertical > -0.65f)
             {
-                crouch = false;
-                animator.SetBool("IsCrouch", false);
+                NotCrouching();
             }
 
-            if (Input.GetButtonDown("Fire1") && thecooldown.trapIsCooldown == false && isEnoughStarTrap == true)
+            if (Input.GetButtonDown("Fire1"))
             {
-                trapTemp = Instantiate(trap, new Vector3(transform.position.x, transform.position.y, transform.position.z + 0.5f), transform.rotation);
-                theTrap = trapTemp.GetComponent<TrapController>();
-                theTrap.setTrapValue(stunTime);
-                starUsed = starUsedSet(stunTime);
-                thecooldown.trapIsCooldown = true;
-                starValue -= starUsed;
-                ChekStarValue();
-                theUiStarCount.changeStarText(starValue);
+                ActivateTrap();
             }
 
-            if(Input.GetButtonDown("Fire2") && thecooldown.flashIsChannelling == false && isEnoughStarFlash == true)
+            if(Input.GetButtonDown("Fire2"))
             {
-                thecooldown.flashIsChannelling = true;
-                starValue -= flashValue;
-                theUiStarCount.changeStarText(starValue);
+                ActivateFlash();
             }
 
-            if(Input.GetButtonDown("Fire3") && isEnoghStarSuperJump == true)
+            if(Input.GetButtonDown("Fire3"))
             {
-                //stop the character
-                horizontalMove = 0; 
-                animator.SetFloat("Speed", 0);
-                thecooldown.SuperJumpIsChannelling = true; Debug.Log("Fire 3");
-                starValue -= superJumpValue;
-                theUiStarCount.changeStarText(starValue);
+                ActivateSuperJump();
             }
         }
                 
+    }
+
+    public void Jumping()
+    {
+        jump = true;
+        animator.SetBool("IsJump", true);
+        if (!SceneController.gameIsStarted)
+        {
+           theSceneContreoller.GameStarted();
+        }
+        //Debug.Log("Jump Button Pressed");
+    }
+
+    void Crouching()
+    {
+        crouch = true;
+        animator.SetBool("IsCrouch", true);
+    }
+
+    void NotCrouching()
+    {
+        crouch = false;
+        animator.SetBool("IsCrouch", false);
+    }
+
+    public void ActivateTrap()
+    {
+        if(thecooldown.trapIsCooldown == false && isEnoughStarTrap == true)
+        {
+            trapTemp = Instantiate(trap, new Vector3(transform.position.x, transform.position.y, transform.position.z + 0.5f), transform.rotation);
+            theTrap = trapTemp.GetComponent<TrapController>();
+            theTrap.setTrapValue(stunTime);
+            starUsed = starUsedSet(stunTime);
+            thecooldown.trapIsCooldown = true;
+            starValue -= starUsed;
+            ChekStarValue();
+            theUiStarCount.changeStarText(starValue);
+        }
+        //Debug.Log("Trap Button Pressed");
+    }
+
+    public void ActivateFlash()
+    {
+        if(thecooldown.flashIsChannelling == false && isEnoughStarFlash == true)
+        {
+            thecooldown.flashIsChannelling = true;
+            starValue -= flashValue;
+            theUiStarCount.changeStarText(starValue);
+        }
+        //Debug.Log("Flash Button Pressed");
+    }
+
+    public void ActivateSuperJump()
+    {
+        if(isEnoghStarSuperJump == true)
+        {
+            //stop the character
+            horizontalMove = 0;
+            animator.SetFloat("Speed", 0);
+            thecooldown.SuperJumpIsChannelling = true; Debug.Log("Fire 3");
+            starValue -= superJumpValue;
+            theUiStarCount.changeStarText(starValue);
+        }
+        //Debug.Log("Super Jump Button Pressed");
     }
 
     public void OnLanding()
@@ -149,6 +204,7 @@ public class PlayerMovement : MonoBehaviour
             isDead = true; //Debug.Log("Player Dead");
             animator.SetBool("IsDead", true);
             animator.SetFloat("Speed", 0);
+            theSceneContreoller.playerDead();
         }
     }
 

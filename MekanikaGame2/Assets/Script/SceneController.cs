@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class SceneController : MonoBehaviour
 {
@@ -9,17 +10,47 @@ public class SceneController : MonoBehaviour
     public PlapformGenerator thePlatform;
     private int ifPlayerFrontPlatform = 4;
     private int ifPlayerBehindPlatform = 6;
+    public GameObject GameOverPanel;
+    private bool raceFinish = false;
+    public static bool gameIsStarted = false;
+    public GameObject StartPanel;
+    private float coolDownStartTime = 3f;
+    private float zeroTimeStart = 3;
+    private bool startingGame = false;
+    public Text theCountDownText;
 
     // Start is called before the first frame update
     void Start()
     {
-            
+        GameOverPanel.SetActive(false);
+        StartPanel.SetActive(true);
+        theCountDownText.text = ("");
     }
 
     // Update is called once per frame
     void Update()
     {
         finishCheck();
+
+        if (startingGame)
+        {
+            zeroTimeStart -= 3 / coolDownStartTime * Time.deltaTime;
+            
+            if(zeroTimeStart <= 0.5)
+            {
+                theCountDownText.text = ("RACE");
+            }
+            else
+            {
+                theCountDownText.text = zeroTimeStart.ToString("0");
+            }
+            if (zeroTimeStart <= 0)
+            {
+                gameIsStarted = true;
+                startingGame = false;
+                theCountDownText.text = ("");
+            }
+        }
     }
 
     private void FixedUpdate()
@@ -29,14 +60,18 @@ public class SceneController : MonoBehaviour
 
     void finishCheck()
     {
-        if (thePlayer.position.x > finishPoint.position.x)
+        if (!raceFinish)
         {
-            Debug.Log("Player Wins");
+            if (thePlayer.position.x > finishPoint.position.x)
+            {
+                //Debug.Log("Player Wins");
+            }
+            else if (thePlayer.position.x > finishPoint.position.x)
+            {
+                //Debug.Log("Enemy Wins!");
+            }
         }
-        else if (thePlayer.position.x > finishPoint.position.x)
-        {
-            Debug.Log("Enemy Wins!");
-        }
+        
     }
 
     void fairPlatform()
@@ -49,5 +84,16 @@ public class SceneController : MonoBehaviour
         {
             thePlatform.changeRandomPlatform(ifPlayerBehindPlatform);
         }
+    }
+
+    public void playerDead()
+    {
+        GameOverPanel.SetActive(true);
+    }
+
+    public void GameStarted()
+    {
+        StartPanel.SetActive(false);
+        startingGame = true;
     }
 }
